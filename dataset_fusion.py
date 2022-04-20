@@ -1,11 +1,28 @@
 import torch
-from torch.utils.data import random_split, DataLoader
 from torchvision.datasets import MNIST
 import torchvision.transforms as T
 
+from torch.utils.data import Dataset, DataLoader
+
 import pytorch_lightning as pl
 
-class MNISTDataModule(pl.LightningDataModule):
+
+class RandDataset(Dataset):
+    def __init__(self, length, size, mean, std) -> None:
+        super().__init__()
+        self.length = length
+        self.size = size
+        self.mean = mean
+        self.std = std
+
+    def __len__(self):
+        return self.length
+
+    def __getitem__(self, _):
+        # Label is bogus
+        return torch.randn(self.size), 1
+
+class MNISTFusionDataModule(pl.LightningDataModule):
     @staticmethod
     def add_mooney_args(parent_parser):
         parser = parent_parser.add_argument_group("Dataset")
@@ -20,13 +37,7 @@ class MNISTDataModule(pl.LightningDataModule):
 
         # ==== File configs ====
         parser.add_argument("--root", type=str, default="./")
-
-        # ==== Other configs ====
-        parser.add_argument("--partition_rnd_state", type=int, default=42)
-        parser.add_argument("--partition_total_num", type=int, default=2)
-        parser.add_argument("--partition_num", type=int, default=0)
-        parser.add_argument("--val_ratio", type=float, default=0.2)
-
+        parser.add_argument("--dataset_length", type=int, default=512)
         return parent_parser
 
     def __init__(self, hparams):
@@ -38,35 +49,24 @@ class MNISTDataModule(pl.LightningDataModule):
             T.ToTensor(), 
             T.Normalize((0.1307,), (0.3081,))
         ])
-        train_val_dataset = MNIST(
-            root=self.hparams.root,
-            download=True,
-            train=True,
-            transform=transform,
-        )
         test_dataset = MNIST(
             root=self.hparams.root,
             download=True,
             train=False,
             transform=transform,
         )
-
-        # Subsample train to create a partition
-        train_length = len(train_val_dataset)//self.hparams.partition_total_num
-        train_lengths = [train_length] * (self.hparams.partition_total_num-1)
-        train_lengths += [len(train_val_dataset)-sum(train_lengths)]
-        partitions = random_split(
-            train_val_dataset, train_lengths, generator=torch.Generator().manual_seed(self.hparams.partition_rnd_state))
-        train_val_dataset = partitions[self.hparams.partition_num]
-
-        # Further divide the train_val partition into train and val
-        train_val_length = [len(train_val_dataset)*(1-self.hparams.val_ratio)]
-        train_val_length += [len(train_val_dataset)-train_val_length[0]]
-        train_dataset, val_dataset = random_split(
-            train_val_dataset, train_val_length, generator=torch.Generator().manual_seed(self.hparams.partition_rnd_state))
-
-        self.train_dataset = train_dataset
-        self.val_dataset = val_dataset
+        self.train_dataset = RandDataset(
+            length=self.hparams.dataset_length,
+            size=(28, 28),
+            mean=0.1307,
+            std=0.3081
+        )
+        self.val_dataset = RandDataset(
+            length=self.hparams.dataset_length,
+            size=(28, 28),
+            mean=0.1307,
+            std=0.3081
+        )
         self.test_dataset = test_dataset
 
     def test_dataloader(self):
