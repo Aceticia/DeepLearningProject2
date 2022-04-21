@@ -23,8 +23,8 @@ class MNISTModel(pl.LightningModule):
         return parent_parser
 
     def __init__(self, args):
-        super(MNISTModel).__init__()
-        self.save_hyperparameters()
+        super().__init__()
+        self.save_hyperparameters(args)
 
         self.layers = nn.ModuleList()
         self.in_mlp = nn.Sequential(
@@ -44,12 +44,11 @@ class MNISTModel(pl.LightningModule):
         self.acc = Accuracy()
 
     def configure_optimizers(self):
-        optim = getattr(torch.optim, self.hparams.optim)(
+        return getattr(torch.optim, self.hparams.optim)(
             self.parameters(),
             lr=self.hparams.lr,
             weight_decay=self.hparams.weight_decay
         )
-        return optim
 
     def get_loss_acc(self, x, y):
         # First get the logits 
@@ -68,16 +67,17 @@ class MNISTModel(pl.LightningModule):
         x, y = batch
         loss = self.get_loss_acc(x, y)
         self.log('test_acc', self.acc, on_epoch=True)
-        return loss
+        self.log('test_loss', loss, on_epoch=True)
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         loss = self.get_loss_acc(x, y)
         self.log('val_acc', self.acc, on_epoch=True)
-        return loss
+        self.log('val_loss', loss, on_epoch=True)
 
     def forward(self, x):
         x = x.flatten(1)
+        x = self.in_mlp(x)
         for l in self.layers:
             x = l(x)
         return self.cls(x)

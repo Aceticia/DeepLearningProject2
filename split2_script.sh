@@ -4,9 +4,10 @@ do
   mkdir outputs/split${split_num}
 
   # Run the main file for pretraining the splits
-  for split_no in {0..29}
-  do
+  split_no=0
+  while [ "$split_no" -lt "$split_num" ]; do
     python main_pretrain.py --wandb_run_name split${split_num}_pretrain${split_no} --wandb_project_name DLProject2Pretrain --partition_ckpt_directory outputs/split${split_num} --partition_total_num ${split_num} --partition_num ${split_no}
+    split_no=$(($split_no + 1))
   done
 
   # Create the fusion outcome checkpoint directory
@@ -15,6 +16,6 @@ do
   # Run the main for fusion of the splits
   for run_id in {1..5}
   do
-    python main_fusion.py --wandb_run_name split${split_num}_run --wandb_project_name DLProject2Fusion --partition_ckpt_directory outputs/split${split_num}
+    python main_fusion.py --wandb_run_name split${split_num}_run --wandb_project_name DLProject2Fusion --partition_ckpt_directory outputs/split${split_num} --max_epochs 500 --fusion_outcome_ckpt_directory outputs/split${split_num}_fusion_outcome
   done
 done
