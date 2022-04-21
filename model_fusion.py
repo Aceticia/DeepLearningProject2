@@ -25,8 +25,8 @@ class MNISTFusionModel(pl.LightningModule):
 
         return parent_parser
 
-    def __init__(self, args, *pretrained_models):
-        super(MNISTFusionModel).__init__()
+    def __init__(self, args, pretrained_models):
+        super().__init__()
         self.save_hyperparameters(args)
 
         self.pretrained_models = pretrained_models
@@ -49,12 +49,11 @@ class MNISTFusionModel(pl.LightningModule):
         self.loss = getattr(torch.nn, self.hparams.loss_type)()
 
     def configure_optimizers(self):
-        optim = getattr(torch.optim, self.hparams.optim)(
+        return getattr(torch.optim, self.hparams.optim)(
             self.parameters(),
             lr=self.hparams.lr,
             weight_decay=self.hparams.weight_decay
         )
-        return optim
 
     def get_loss_acc(self, x, y, test):
         if test:
@@ -65,11 +64,7 @@ class MNISTFusionModel(pl.LightningModule):
             return loss
         else:
             # When we are not testing, y is just random
-            outs = []
-            for model in self.pretrained_models:
-                outs.append(
-                    (F.softmax(model(x), dim=1)).unsqueeze(1)
-                )
+            outs = [(F.softmax(model(x), dim=1)).unsqueeze(1) for model in self.pretrained_models]
 
             # Concatenate and find the entropy 
             temp_distribution = torch.cat(outs, dim=1)
@@ -85,22 +80,22 @@ class MNISTFusionModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        loss = self.get_loss_acc(x, y)
-        return loss
+        return self.get_loss_acc(x, y, False)
 
     def test_step(self, batch, batch_idx):
         x, y = batch
         loss = self.get_loss_acc(x, y, test=True)
         self.log('test_acc', self.acc, on_epoch=True)
-        return loss
+        self.log('test_loss', loss, on_epoch=True)
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        loss = self.get_loss_acc(x, y)
-        return loss
+        loss = self.get_loss_acc(x, y, False)
+        self.log('val_loss', loss, on_epoch=True)
 
     def forward(self, x):
         x = x.flatten(1)
+        x = self.in_mlp(x)
         for l in self.layers:
             x = l(x)
         return self.cls(x)

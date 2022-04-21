@@ -7,7 +7,7 @@ import pytorch_lightning as pl
 
 class MNISTDataModule(pl.LightningDataModule):
     @staticmethod
-    def add_mooney_args(parent_parser):
+    def add_dataset_specific_args(parent_parser):
         parser = parent_parser.add_argument_group("Dataset")
 
         # ==== Dataloaders config ====
@@ -19,7 +19,7 @@ class MNISTDataModule(pl.LightningDataModule):
         parser.add_argument("--test_n_workers", type=int, default=32)
 
         # ==== File configs ====
-        parser.add_argument("--root", type=str, default="./")
+        parser.add_argument("--root", type=str, default="~/data/")
 
         # ==== Other configs ====
         parser.add_argument("--partition_rnd_state", type=int, default=42)
@@ -31,7 +31,7 @@ class MNISTDataModule(pl.LightningDataModule):
 
     def __init__(self, hparams):
         super().__init__()
-        self.data_params = hparams
+        self.save_hyperparameters(hparams)
 
         # Get the mnist dataset
         transform = T.Compose([
@@ -52,7 +52,7 @@ class MNISTDataModule(pl.LightningDataModule):
         )
 
         # Subsample train to create a partition
-        train_length = len(train_val_dataset)//self.hparams.partition_total_num
+        train_length = int(len(train_val_dataset)//self.hparams.partition_total_num)
         train_lengths = [train_length] * (self.hparams.partition_total_num-1)
         train_lengths += [len(train_val_dataset)-sum(train_lengths)]
         partitions = random_split(
@@ -60,7 +60,7 @@ class MNISTDataModule(pl.LightningDataModule):
         train_val_dataset = partitions[self.hparams.partition_num]
 
         # Further divide the train_val partition into train and val
-        train_val_length = [len(train_val_dataset)*(1-self.hparams.val_ratio)]
+        train_val_length = [int(len(train_val_dataset)*(1-self.hparams.val_ratio))]
         train_val_length += [len(train_val_dataset)-train_val_length[0]]
         train_dataset, val_dataset = random_split(
             train_val_dataset, train_val_length, generator=torch.Generator().manual_seed(self.hparams.partition_rnd_state))
@@ -73,21 +73,21 @@ class MNISTDataModule(pl.LightningDataModule):
         return DataLoader(
             dataset=self.test_dataset,
             shuffle=False,
-            batch_size=self.data_params.test_batchsize,
-            num_workers=self.data_params.test_n_workers)
+            batch_size=self.hparams.test_batchsize,
+            num_workers=self.hparams.test_n_workers)
 
     def val_dataloader(self):
         return DataLoader(
             dataset=self.val_dataset,
             shuffle=False,
-            batch_size=self.data_params.val_batchsize,
-            num_workers=self.data_params.val_n_workers)
+            batch_size=self.hparams.val_batchsize,
+            num_workers=self.hparams.val_n_workers)
 
     def train_dataloader(self):
         return DataLoader(
             dataset=self.train_dataset,
             shuffle=True,
-            batch_size=self.data_params.train_batchsize,
-            num_workers=self.data_params.train_n_workers)
+            batch_size=self.hparams.train_batchsize,
+            num_workers=self.hparams.train_n_workers)
 
 

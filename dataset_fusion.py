@@ -24,7 +24,7 @@ class RandDataset(Dataset):
 
 class MNISTFusionDataModule(pl.LightningDataModule):
     @staticmethod
-    def add_mooney_args(parent_parser):
+    def add_dataset_specific_args(parent_parser):
         parser = parent_parser.add_argument_group("Dataset")
 
         # ==== Dataloaders config ====
@@ -36,13 +36,13 @@ class MNISTFusionDataModule(pl.LightningDataModule):
         parser.add_argument("--test_n_workers", type=int, default=32)
 
         # ==== File configs ====
-        parser.add_argument("--root", type=str, default="./")
+        parser.add_argument("--root", type=str, default="~/data/")
         parser.add_argument("--dataset_length", type=int, default=512)
         return parent_parser
 
     def __init__(self, hparams):
-        super().__init__()
-        self.data_params = hparams
+        super().__init__(hparams)
+        self.save_hyperparameters(hparams)
 
         # Get the mnist dataset
         transform = T.Compose([
@@ -73,21 +73,21 @@ class MNISTFusionDataModule(pl.LightningDataModule):
         return DataLoader(
             dataset=self.test_dataset,
             shuffle=False,
-            batch_size=self.data_params.test_batchsize,
-            num_workers=self.data_params.test_n_workers)
+            batch_size=self.hparams.test_batchsize,
+            num_workers=self.hparams.test_n_workers)
 
     def val_dataloader(self):
         return DataLoader(
             dataset=self.val_dataset,
             shuffle=False,
-            batch_size=self.data_params.val_batchsize,
-            num_workers=self.data_params.val_n_workers)
+            batch_size=self.hparams.val_batchsize,
+            num_workers=self.hparams.val_n_workers)
 
     def train_dataloader(self):
         return DataLoader(
             dataset=self.train_dataset,
             shuffle=True,
-            batch_size=self.data_params.train_batchsize,
-            num_workers=self.data_params.train_n_workers)
+            batch_size=self.hparams.train_batchsize,
+            num_workers=self.hparams.train_n_workers)
 
 

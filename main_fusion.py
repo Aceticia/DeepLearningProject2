@@ -15,7 +15,7 @@ from model_fusion import MNISTFusionModel as FusionModel
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser = DataModule.add_dataset_specific_args(parser)
-    parser = PretrainedModel.add_model_specific_args(parser)
+    parser = FusionModel.add_model_specific_args(parser)
     parser = Trainer.add_argparse_args(parser)
     parser.add_argument('--wandb_run_name', type=str, default=None)
     parser.add_argument('--wandb_project_name', type=str, default=None)
@@ -29,7 +29,8 @@ if __name__ == "__main__":
     # Instantiate pretrained models
     pretrained_models = []
     for f in os.listdir(args.partition_ckpt_directory):
-        pretrained_models.append(PretrainedModel.load_from_checkpoint(f))
+        full_path = os.path.join(args.partition_ckpt_directory, f)
+        pretrained_models.append(PretrainedModel.load_from_checkpoint(full_path))
 
     # Instantiate fusion model
     model = FusionModel(args, pretrained_models=pretrained_models)
