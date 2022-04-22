@@ -5,6 +5,7 @@ from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import (
     ModelCheckpoint,
 )
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 from argparse import ArgumentParser
 
@@ -51,6 +52,10 @@ if __name__ == "__main__":
                 dirpath=args.fusion_outcome_ckpt_directory,
                 filename=args.wandb_run_name
             ),
+            EarlyStopping(
+                monitor='val_loss',
+                patience=10,
+            )
         ]
     )
 
@@ -59,10 +64,3 @@ if __name__ == "__main__":
         model=model,
         datamodule=datamodule
     )
-
-    # Find best checkpoint to test
-    trainer.test(
-        ckpt_path=trainer.checkpoint_callback.best_model_path,
-        datamodule=datamodule
-    )
-

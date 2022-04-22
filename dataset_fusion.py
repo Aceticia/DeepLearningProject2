@@ -28,16 +28,16 @@ class MNISTFusionDataModule(pl.LightningDataModule):
         parser = parent_parser.add_argument_group("Dataset")
 
         # ==== Dataloaders config ====
-        parser.add_argument("--train_batchsize", type=int, default=128)
-        parser.add_argument("--test_batchsize", type=int, default=256)
-        parser.add_argument("--val_batchsize", type=int, default=256)
+        parser.add_argument("--train_batchsize", type=int, default=256)
+        parser.add_argument("--test_batchsize", type=int, default=512)
+        parser.add_argument("--val_batchsize", type=int, default=512)
         parser.add_argument("--train_n_workers", type=int, default=32)
         parser.add_argument("--val_n_workers", type=int, default=32)
         parser.add_argument("--test_n_workers", type=int, default=32)
 
         # ==== File configs ====
         parser.add_argument("--root", type=str, default="~/data/")
-        parser.add_argument("--dataset_length", type=int, default=512)
+        parser.add_argument("--dataset_length", type=int, default=1024)
         return parent_parser
 
     def __init__(self, hparams):
@@ -49,32 +49,18 @@ class MNISTFusionDataModule(pl.LightningDataModule):
             T.ToTensor(), 
             T.Normalize((0.1307,), (0.3081,))
         ])
-        test_dataset = MNIST(
-            root=self.hparams.root,
-            download=True,
-            train=False,
-            transform=transform,
-        )
         self.train_dataset = RandDataset(
             length=self.hparams.dataset_length,
             size=(28, 28),
             mean=0.1307,
             std=0.3081
         )
-        self.val_dataset = RandDataset(
-            length=self.hparams.dataset_length,
-            size=(28, 28),
-            mean=0.1307,
-            std=0.3081
+        self.val_dataset = MNIST(
+            root=self.hparams.root,
+            download=True,
+            train=False,
+            transform=transform,
         )
-        self.test_dataset = test_dataset
-
-    def test_dataloader(self):
-        return DataLoader(
-            dataset=self.test_dataset,
-            shuffle=False,
-            batch_size=self.hparams.test_batchsize,
-            num_workers=self.hparams.test_n_workers)
 
     def val_dataloader(self):
         return DataLoader(

@@ -44,7 +44,7 @@ if __name__ == "__main__":
             ),
             EarlyStopping(
                 monitor='val_loss',
-                patience=50
+                patience=5
             )
         ]
     )

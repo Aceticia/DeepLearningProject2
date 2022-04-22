@@ -11,9 +11,9 @@ class MNISTDataModule(pl.LightningDataModule):
         parser = parent_parser.add_argument_group("Dataset")
 
         # ==== Dataloaders config ====
-        parser.add_argument("--train_batchsize", type=int, default=128)
-        parser.add_argument("--test_batchsize", type=int, default=256)
-        parser.add_argument("--val_batchsize", type=int, default=256)
+        parser.add_argument("--train_batchsize", type=int, default=256)
+        parser.add_argument("--test_batchsize", type=int, default=512)
+        parser.add_argument("--val_batchsize", type=int, default=512)
         parser.add_argument("--train_n_workers", type=int, default=32)
         parser.add_argument("--val_n_workers", type=int, default=32)
         parser.add_argument("--test_n_workers", type=int, default=32)

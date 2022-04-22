@@ -29,7 +29,7 @@ class MNISTFusionModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters(args)
 
-        self.pretrained_models = pretrained_models
+        self.pretrained_models = nn.ModuleList(pretrained_models)
         self.layers = nn.ModuleList()
         self.in_mlp = nn.Sequential(
             nn.Linear(28*28, self.hparams.hiddens),
@@ -64,7 +64,8 @@ class MNISTFusionModel(pl.LightningModule):
             return loss
         else:
             # When we are not testing, y is just random
-            outs = [(F.softmax(model(x), dim=1)).unsqueeze(1) for model in self.pretrained_models]
+            with torch.no_grad():
+                outs = [(F.softmax(model(x), dim=1)).unsqueeze(1) for model in self.pretrained_models]
 
             # Concatenate and find the entropy 
             temp_distribution = torch.cat(outs, dim=1)
@@ -90,8 +91,9 @@ class MNISTFusionModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        loss = self.get_loss_acc(x, y, False)
+        loss = self.get_loss_acc(x, y, True)
         self.log('val_loss', loss, on_epoch=True)
+        self.log('val_acc', self.acc, on_epoch=True)
 
     def forward(self, x):
         x = x.flatten(1)
