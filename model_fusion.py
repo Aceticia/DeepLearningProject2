@@ -44,9 +44,13 @@ class MNISTFusionModel(pl.LightningModule):
                     nn.Dropout(self.hparams.dropout)
                 )
             )
-        self.cls = nn.Linear(self.hparams.hiddens, 10)
+        self.cls = nn.Linear(self.hparams.hiddens, 30)
         self.acc = Accuracy()
-        self.loss = getattr(torch.nn, self.hparams.loss_type)()
+
+        loss_params = {}
+        if self.hparams.loss_type == "KLDivLoss":
+            loss_params["reduction"] = "batchmean"
+        self.loss = getattr(torch.nn, self.hparams.loss_type)(loss_params)
 
     def configure_optimizers(self):
         return getattr(torch.optim, self.hparams.optim)(
@@ -93,7 +97,7 @@ class MNISTFusionModel(pl.LightningModule):
         self.log('test_acc', self.acc, on_epoch=True)
         self.log('test_loss', loss, on_epoch=True)
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx, *args, **kwargs):
         x, y = batch
         loss = self.get_loss_acc(x, y, True)
         self.log('val_loss', loss, on_epoch=True)

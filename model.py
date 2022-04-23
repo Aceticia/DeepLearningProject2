@@ -40,7 +40,7 @@ class MNISTModel(pl.LightningModule):
                     nn.Dropout(self.hparams.dropout)
                 )
             )
-        self.cls = nn.Linear(self.hparams.hiddens, 10)
+        self.cls = nn.Linear(self.hparams.hiddens, 30)
         self.acc = Accuracy()
 
     def configure_optimizers(self):

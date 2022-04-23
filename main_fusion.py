@@ -2,11 +2,6 @@ import os
 
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.callbacks import (
-    ModelCheckpoint,
-)
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-
 from argparse import ArgumentParser
 
 from dataset_fusion import MNISTFusionDataModule as DataModule
@@ -19,7 +14,7 @@ if __name__ == "__main__":
     parser = FusionModel.add_model_specific_args(parser)
     parser = Trainer.add_argparse_args(parser)
     parser.add_argument('--wandb_run_name', type=str, default=None)
-    parser.add_argument('--wandb_project_name', type=str, default=None)
+    parser.add_argument('--wandb_project_name', type=str, default="DLProject2Fusion")
     parser.add_argument('--partition_ckpt_directory', type=str, default="./ckpts")
     parser.add_argument('--fusion_outcome_ckpt_directory', type=str, default="./fusion_ckpts")
     args = parser.parse_args()
@@ -46,17 +41,6 @@ if __name__ == "__main__":
     trainer = Trainer.from_argparse_args(
         args,
         logger=logger,
-        callbacks=[
-            ModelCheckpoint(
-                monitor='val_loss',
-                dirpath=args.fusion_outcome_ckpt_directory,
-                filename=args.wandb_run_name
-            ),
-            EarlyStopping(
-                monitor='val_loss',
-                patience=10,
-            )
-        ]
     )
 
     # Train

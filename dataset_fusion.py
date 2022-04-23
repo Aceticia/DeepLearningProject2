@@ -35,7 +35,7 @@ class MNISTFusionDataModule(pl.LightningDataModule):
 
         # ==== File configs ====
         parser.add_argument("--root", type=str, default="~/data/")
-        parser.add_argument("--dataset_length", type=int, default=1024)
+        parser.add_argument("--dataset_length", type=int, default=2048)
         return parent_parser
 
     def __init__(self, hparams):
@@ -51,11 +51,6 @@ class MNISTFusionDataModule(pl.LightningDataModule):
         )
 
         self.val_datasets = get_all_datasets(
-            root=self.hparams.root,
-            download=True,
-            train=False,
-        )
-        self.test_datasets = get_all_datasets(
             root=self.hparams.root,
             download=True,
             train=False,
