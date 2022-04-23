@@ -17,9 +17,10 @@ def get_dataset(idx, **kwargs):
         T.ToTensor(), 
         T.Normalize((0.1307,), (0.3081,))
     ])
+    target_transform = lambda label: label+10*idx
     name = source_datasets[idx][0]
     dataset_constructor = getattr(D, name)
-    return dataset_constructor(transform=transform, **kwargs)
+    return dataset_constructor(transform=transform, target_transform=target_transform, **kwargs)
 
 def get_all_datasets(**kwargs):
     return [get_dataset(idx, **kwargs) for idx in range(len(source_datasets))]
