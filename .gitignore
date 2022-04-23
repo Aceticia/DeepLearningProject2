@@ -1,0 +1,4 @@
+__pycache__/
+wandb/
+ckpts/
+fusion_ckpts/

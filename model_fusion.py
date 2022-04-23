@@ -69,13 +69,17 @@ class MNISTFusionModel(pl.LightningModule):
 
             # Concatenate and find the entropy 
             temp_distribution = torch.cat(outs, dim=1)
-            entropy = -torch.sum((temp_distribution*torch.log(temp_distribution)), dim=2, keepdim=True)
 
-            # Use softmin of entropy to create weight
-            weight = F.softmin(self.hparams.temperature*entropy, dim=1)
+            if self.hparams.temperature > 0:
+                entropy = -torch.sum((temp_distribution*torch.log(temp_distribution)), dim=2, keepdim=True)
 
-            # Weigh the old distribution and pass through loss function
-            target = (weight * temp_distribution).sum(dim=1)
+                # Use softmin of entropy to create weight
+                weight = F.softmin(self.hparams.temperature*entropy, dim=1)
+
+                # Weigh the old distribution and pass through loss function
+                target = (weight * temp_distribution).sum(dim=1)
+            else:
+                target = temp_distribution.mean(1)
 
             return self.loss(F.softmax(self(x), dim=1), target)
 

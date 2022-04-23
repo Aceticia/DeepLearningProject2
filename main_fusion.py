@@ -20,8 +20,8 @@ if __name__ == "__main__":
     parser = Trainer.add_argparse_args(parser)
     parser.add_argument('--wandb_run_name', type=str, default=None)
     parser.add_argument('--wandb_project_name', type=str, default=None)
-    parser.add_argument('--partition_ckpt_directory', type=str, default="./split2")
-    parser.add_argument('--fusion_outcome_ckpt_directory', type=str, default="./split2_fusion_outcome")
+    parser.add_argument('--partition_ckpt_directory', type=str, default="./ckpts")
+    parser.add_argument('--fusion_outcome_ckpt_directory', type=str, default="./fusion_ckpts")
     args = parser.parse_args()
 
     # Instantiate the dataset

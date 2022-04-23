@@ -1,9 +1,8 @@
 import torch
 from torch.utils.data import random_split, DataLoader
-from torchvision.datasets import MNIST
-import torchvision.transforms as T
 
 import pytorch_lightning as pl
+from utils import get_dataset
 
 class MNISTDataModule(pl.LightningDataModule):
     @staticmethod
@@ -23,7 +22,6 @@ class MNISTDataModule(pl.LightningDataModule):
 
         # ==== Other configs ====
         parser.add_argument("--partition_rnd_state", type=int, default=42)
-        parser.add_argument("--partition_total_num", type=int, default=2)
         parser.add_argument("--partition_num", type=int, default=0)
         parser.add_argument("--val_ratio", type=float, default=0.2)
 
@@ -34,30 +32,18 @@ class MNISTDataModule(pl.LightningDataModule):
         self.save_hyperparameters(hparams)
 
         # Get the mnist dataset
-        transform = T.Compose([
-            T.ToTensor(), 
-            T.Normalize((0.1307,), (0.3081,))
-        ])
-        train_val_dataset = MNIST(
+        train_val_dataset = get_dataset(
+            idx=self.hparams.partition_num,
             root=self.hparams.root,
             download=True,
             train=True,
-            transform=transform,
         )
-        test_dataset = MNIST(
+        test_dataset = get_dataset(
+            idx=self.hparams.partition_num,
             root=self.hparams.root,
             download=True,
             train=False,
-            transform=transform,
         )
-
-        # Subsample train to create a partition
-        train_length = int(len(train_val_dataset)//self.hparams.partition_total_num)
-        train_lengths = [train_length] * (self.hparams.partition_total_num-1)
-        train_lengths += [len(train_val_dataset)-sum(train_lengths)]
-        partitions = random_split(
-            train_val_dataset, train_lengths, generator=torch.Generator().manual_seed(self.hparams.partition_rnd_state))
-        train_val_dataset = partitions[self.hparams.partition_num]
 
         # Further divide the train_val partition into train and val
         train_val_length = [int(len(train_val_dataset)*(1-self.hparams.val_ratio))]

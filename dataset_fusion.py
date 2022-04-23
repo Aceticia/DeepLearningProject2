@@ -1,10 +1,8 @@
 import torch
-from torchvision.datasets import MNIST
-import torchvision.transforms as T
-
 from torch.utils.data import Dataset, DataLoader
 
 import pytorch_lightning as pl
+from utils import get_all_datasets
 
 
 class RandDataset(Dataset):
@@ -45,29 +43,30 @@ class MNISTFusionDataModule(pl.LightningDataModule):
         self.save_hyperparameters(hparams)
 
         # Get the mnist dataset
-        transform = T.Compose([
-            T.ToTensor(), 
-            T.Normalize((0.1307,), (0.3081,))
-        ])
         self.train_dataset = RandDataset(
             length=self.hparams.dataset_length,
             size=(28, 28),
             mean=0.1307,
             std=0.3081
         )
-        self.val_dataset = MNIST(
+
+        self.val_datasets = get_all_datasets(
             root=self.hparams.root,
             download=True,
             train=False,
-            transform=transform,
+        )
+        self.test_datasets = get_all_datasets(
+            root=self.hparams.root,
+            download=True,
+            train=False,
         )
 
     def val_dataloader(self):
-        return DataLoader(
-            dataset=self.val_dataset,
+        return [DataLoader(
+            dataset=d,
             shuffle=False,
             batch_size=self.hparams.val_batchsize,
-            num_workers=self.hparams.val_n_workers)
+            num_workers=self.hparams.val_n_workers) for d in self.val_datasets]
 
     def train_dataloader(self):
         return DataLoader(
